@@ -1,7 +1,7 @@
 Pleasant Password Server API
 ============================
 
-Wrapper for Pleasant Password Server (PPS) API, [currently v4 only](https://pleasantpasswords.com/info/pleasant-password-server/m-programmatic-access/restful-api#v4).
+Ansible role: Wrapper for Pleasant Password Server (PPS) API, [currently v4 only](https://pleasantpasswords.com/info/pleasant-password-server/m-programmatic-access/restful-api#v4).
 
 Requirements
 ------------
