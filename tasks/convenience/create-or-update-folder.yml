@@ -1,0 +1,31 @@
+---
+# Copyright 2019, Giorgi Tavkelishvili
+#
+# License as per [repo](master/LICENSE)
+#
+# This play will conveniently:
+#  * create the folder if one with the same "Name" does not already exist in the parent folder, or
+#  * update an existing folder if one with the same "Name" already exists in the parent folder
+# on Pleasant Password Server.
+
+- name: List parameters to create-or-update-folder.yml
+  debug:
+    msg:
+       - "pps_credentialgroup: {{ pps_credentialgroup }}"
+  no_log: false
+
+- assert:
+    that:
+      - "['Name', 'ParentId'] is subset(pps_credentialgroup.keys())"
+    msg: "'Name', and/or 'ParentId' key(s) NOT in pps_credentialgroup: {{ pps_credentialgroup }}"
+  no_log: false
+
+- set_fact:
+    pps_create_or_update_folder_result: "" # RETVAL
+    # Note: vars passed into imports and includes appear to be "immutable" due to variable precedence.
+    pps_credentialgroup_copy: "{{ pps_credentialgroup }}"
+
+# TODO: logic
+
+- debug: var=pps_create_or_update_folder_result
+  no_log: false

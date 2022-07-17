@@ -1,0 +1,114 @@
+---
+# Copyright 2019, Giorgi Tavkelishvili
+#
+# License as per [repo](master/LICENSE)
+#
+# tasks file for pleasant-password-server-api
+
+- debug: var=ansible_date_time
+  no_log: false
+
+- name: List parameters to main.yml
+  debug:
+    msg:
+       - "pps_operation      : {{ pps_operation }}"
+       - "pps_authority      : {{ pps_authority }}"
+       - "pps_api_version    : {{ pps_api_version }}"
+       - "pps_oauth2_username: {{ pps_oauth2_username }}"
+       - "pps_oauth2_password: {{ pps_oauth2_password | regex_replace('.', '*') }}"
+  no_log: false
+
+- set_fact:
+    # Authorization uses a different endpoint from the rest of the API:
+    # https://[domain]:[port]/OAuth2/Token
+    pps_oauth2_url: "https://{{ pps_authority }}/oauth2/token"
+    # The full URL of the API should consist of: 
+    # https://[domain]:[port]/api/{version}/rest/
+    pps_rest_api_url: "https://{{ pps_authority }}/api/{{ pps_api_version }}/rest"
+
+- name: Include tasks from acquire-oauth2-token.yml
+  include_tasks: acquire-oauth2-token.yml
+  when: "'epoch' not in pps_oauth2_token or 'expires_in' not in pps_oauth2_token or
+        (ansible_date_time.epoch|int - pps_oauth2_token.epoch|int) >= (pps_oauth2_token.expires_in|int - 300)"
+
+# Sets: pps_create_credentialgroup_result
+- name: Include tasks from {{ pps_api_version }}/create-credentialgroup.yml
+  include_tasks: "{{ pps_api_version }}/create-credentialgroup.yml"
+  when: pps_operation == 'create-credentialgroup' and
+        pps_credentialgroup is defined
+
+# Sets: pps_create_credential_result
+- name: Include tasks from {{ pps_api_version }}/create-credential.yml
+  include_tasks: "{{ pps_api_version }}/create-credential.yml"
+  when: pps_operation == 'create-credential' and
+        pps_credential is defined
+
+# Sets: pps_delete_credentialgroup_result
+- name: Include tasks from {{ pps_api_version }}/delete-credentialgroup.yml
+  include_tasks: "{{ pps_api_version }}/delete-credentialgroup.yml"
+  when: pps_operation == 'delete-credentialgroup' and
+        pps_credentialgroup_id is defined
+
+# Sets: pps_delete_credential_result
+- name: Include tasks from {{ pps_api_version }}/delete-credential.yml
+  include_tasks: "{{ pps_api_version }}/delete-credential.yml"
+  when: pps_operation == 'delete-credential' and
+        pps_credential_id is defined
+
+# Sets: pps_read_credentialgroup_root_result
+- name: Include tasks from {{ pps_api_version }}/read-credentialgroup-root.yml
+  include_tasks: "{{ pps_api_version }}/read-credentialgroup-root.yml"
+  when: pps_operation == 'read-credentialgroup-root'
+
+# Sets: pps_read_credentialgroup_results
+- name: Include tasks from {{ pps_api_version }}/read-credentialgroup.yml
+  include_tasks: "{{ pps_api_version }}/read-credentialgroup.yml"
+  when: pps_operation == 'read-credentialgroup'
+
+# Sets: pps_read_credential_results
+- name: Include tasks from {{ pps_api_version }}/read-credential.yml
+  include_tasks: "{{ pps_api_version }}/read-credential.yml"
+  when: pps_operation == 'read-credential' and
+        pps_credential is defined and "Id" in pps_credential
+
+# Sets: pps_search_results
+- name: Include tasks from {{ pps_api_version }}/search.yml
+  include_tasks: "{{ pps_api_version }}/search.yml"
+  when: pps_operation == 'search' and
+        pps_query is defined
+
+# Sets: pps_update_credentialgroup_result
+- name: Include tasks from {{ pps_api_version }}/update-credentialgroup.yml
+  include_tasks: "{{ pps_api_version }}/update-credentialgroup.yml"
+  when: pps_operation == 'update-credentialgroup' and
+        pps_credentialgroup_id is defined
+
+# Sets: pps_update_credential_result
+- name: Include tasks from {{ pps_api_version }}/update-credential.yml
+  include_tasks: "{{ pps_api_version }}/update-credential.yml"
+  when: pps_operation == 'update-credential' and
+        pps_credential is defined
+
+# Sets: pps_create_or_update_entry_result
+- name: Include tasks from convenience/create-or-update-entry.yml
+  include_tasks: convenience/create-or-update-entry.yml
+  when: pps_operation == 'create-or-update-entry' and
+        pps_credential is defined
+
+# Sets: pps_search_and_filter_entries_results
+- name: Include tasks from convenience/search-and-filter-entries.yml
+  include_tasks: convenience/search-and-filter-entries.yml
+  when: pps_operation == 'search-and-filter-entries' and
+        pps_search is defined
+
+# Sets: pps_search_filter_and_delete_entry_result
+- name: Include tasks from convenience/search-filter-and-delete-entry.yml
+  include_tasks: convenience/search-filter-and-delete-entry.yml
+  when: pps_operation == 'search-filter-and-delete-entry' and
+        pps_credential is defined
+
+# Sets: pps_create_or_update_folder_result
+- name: Include tasks from convenience/create-or-update-folder.yml
+  include_tasks: convenience/create-or-update-folder.yml
+  when: pps_operation == 'create-or-update-folder' and
+        pps_credentialgroup is defined

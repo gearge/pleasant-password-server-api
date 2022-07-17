@@ -1,0 +1,112 @@
+---
+# Copyright 2019, Giorgi Tavkelishvili
+#
+# License as per [repo](master/LICENSE)
+#
+# This play will conveniently:
+#  * create the entry if one with the same "Name" does not already exist in the destination folder, or
+#  * update an existing entry if one with the same "Name" already exists in the destination folder
+# on Pleasant Password Server.
+
+- name: List parameters to create-or-update-entry.yml
+  debug:
+    msg:
+       - "pps_credential: {{ pps_credential }}"
+  no_log: false
+
+- assert:
+    that:
+      - "['Name', 'Password', 'FullPath'] is subset(pps_credential.keys())"
+    msg: "'Name', 'Password', and/or 'FullPath' key(s) NOT in pps_credential: {{ pps_credential }}"
+  no_log: false
+
+- set_fact:
+    pps_create_or_update_entry_result: "" # RETVAL
+    # Note: vars passed into imports and includes appear to be "immutable" due to variable precedence.
+    pps_credential_copy: "{{ pps_credential }}"
+
+# --- Get GroupId from FullPath ------------------------------------------------
+
+# Sets: pps_search_results
+- name: Include tasks from ../{{ pps_api_version }}/search.yml
+  include_tasks: "../{{ pps_api_version }}/search.yml"
+  vars:
+    pps_query: "{{ pps_credential_copy.FullPath | regex_replace('/$', '') | basename }}"
+
+- set_fact:
+    pps_credentialgroup_id: "{{ item.Id }}"
+  when: item.FullPath | regex_replace('/$', '') == pps_credential_copy.FullPath | regex_replace('/$', '')
+  with_items: '{{ pps_search_results.Groups }}'
+
+- set_fact:
+    pps_credential_copy: "{{ pps_credential_copy | combine({'GroupId': pps_credentialgroup_id}) }}"
+  when: pps_credentialgroup_id is defined
+
+# "pps_credential_copy": {
+#     "FullPath": "Root/Path/To/Folder/",
+#     "GroupId": "62148182-cebe-4615-b519-78aa6d46ab35",
+#     "Name": "name",
+#     "Password": "password"
+#     ...
+# }
+
+# --- Get Id -------------------------------------------------------------------
+
+- block:
+  - set_fact:
+      pps_search:
+        query: "{{ pps_credential_copy.Name }}"
+        filters:
+          Name: "{{ pps_credential_copy.Name }}"
+          FullPath: "{{ pps_credential_copy.FullPath }}"
+  
+  # Sets: pps_search_and_filter_entries_results
+  - name: Include tasks from convenience/search-and-filter-entries.yml
+    include_tasks: convenience/search-and-filter-entries.yml
+  
+  - assert:
+      that:
+        - "pps_search_and_filter_entries_results | length <= 1"
+      msg:
+        - "Path='{{ pps_credential_copy.FullPath }}' contains multiple items matching:"
+        - "Name='{{ pps_credential_copy.Name }}'"
+  
+  - set_fact:
+      pps_credential_id: "{{ item.Id }}"
+    when: "'Id' in item"
+    with_items: '{{ pps_search_and_filter_entries_results }}'
+  
+  - set_fact:
+      pps_credential_copy: "{{ pps_credential_copy | combine({'Id': pps_credential_id}) }}"
+    when: pps_credential_id is defined
+  
+  when: "'GroupId' in pps_credential_copy"
+
+# --- Create or update credential ----------------------------------------------
+
+- block:
+  # Sets: pps_create_credential_result
+  - name: Include tasks from ../{{ pps_api_version }}/create-credential.yml
+    include_tasks: "../{{ pps_api_version }}/create-credential.yml"
+    vars:
+      pps_credential: "{{ pps_credential_copy }}"
+  
+  - set_fact:
+      pps_create_or_update_entry_result: "{{ pps_create_credential_result }}"
+  
+  when: "'Id' not in pps_credential_copy"
+
+- block:
+  # Sets: pps_update_credential_result
+  - name: Include tasks from ../{{ pps_api_version }}/update-credential.yml
+    include_tasks: "../{{ pps_api_version }}/update-credential.yml"
+    vars:
+      pps_credential: "{{ pps_credential_copy }}"
+  
+  - set_fact:
+      pps_create_or_update_entry_result: "{{ pps_update_credential_result }}"
+  
+  when: "'Id' in pps_credential_copy"
+
+- debug: var=pps_create_or_update_entry_result
+  no_log: false

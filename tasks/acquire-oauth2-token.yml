@@ -1,0 +1,42 @@
+---
+
+- name: Get Authentication Token
+  uri:
+    url: "{{ pps_oauth2_url }}"
+    method: POST
+    #validate_certs: no
+    body: "grant_type=password&username={{ pps_oauth2_username }}&password={{ pps_oauth2_password }}"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+  register: uri_result # until timeout is over: i.e. 1200 seconds
+  delegate_to: localhost
+
+# "uri_result": {
+#     "cache_control": "no-cache, no-store, must-revalidate",
+#     "changed": false,
+#     "connection": "close",
+#     "content_length": "1169",
+#     "content_type": "application/json;charset=UTF-8",
+#     "cookies": {},
+#     "date": "Sat, 30 Mar 2019 10:08:07 GMT",
+#     "expires": "-1",
+#     "failed": false,
+#     "json": {
+#         "access_token": "m5KF6Y...CpRd7NIKHqVugenOTOry",
+#         "expires_in": 1200,
+#         "token_type": "bearer"
+#     },
+#     "msg": "OK (1169 bytes)",
+#     "pragma": "no-cache",
+#     "redirected": false,
+#     "server": "[OBFUSCATED]",
+#     "status": 200,
+#     "url": "https://localhost:10001/oauth2/token",
+#     "x_content_type_options": "nosniff",
+#     "x_powered_by": "ASP.NET",
+#     "x_ua_compatible": "IE=Edge",
+#     "x_xss_protection": "1"
+# }
+
+- set_fact:
+    pps_oauth2_token: "{{ uri_result.json | combine({'epoch': ansible_date_time.epoch}) }}"

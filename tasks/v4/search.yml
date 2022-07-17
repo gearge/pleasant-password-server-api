@@ -1,0 +1,78 @@
+---
+# https://info.pleasantsolutions.com/Documentation/Pleasant_Password_Server/
+#  M._Programmatic_Access/_Password_Server_REST_API_Documentation/Service_Models
+#
+# POST search              Returns a list of credentials and groups matching a
+#                          specified query.
+# Method                   POST
+# Requires Authentication? Yes
+#
+# Parameters   
+#   search   
+#
+# Result type              Search Result
+
+- assert:
+    that:
+      - "pps_query is match(match_pps_query)"
+    msg: "NOT a valid search query! pps_query: {{ pps_query }}"
+  no_log: false
+
+- set_fact:
+    uri_request_body:
+      Search: "{{ pps_query }}"
+
+- name: Search
+  uri:
+    url: "{{ pps_rest_api_url }}/search"
+    method: POST
+    #validate_certs: no
+    return_content: yes
+    body: '{{ uri_request_body | to_json }}'
+    headers:
+      Authorization: "{{ pps_oauth2_token.token_type }} {{ pps_oauth2_token.access_token }}"
+      Content-Type: "application/json"
+      Cache-Control: "no-cache"
+  register: uri_result
+  delegate_to: localhost
+
+# "uri_result": {
+#     ...
+#     "json": {
+#         "Credentials": [
+#             {
+#                 "GroupId": "ca1f84b8-38f0-40d5-84a3-9bad0457622e",
+#                 "Id": "864fe6ee-fe9a-4d68-a9ab-07bbe4e0d712",
+#                 "Name": "test1",
+#                 "Notes": "crypto",
+#                 "Path": "Root/Path/To/Another/Folder/",
+#                 "Tags": "",
+#                 "Url": "",
+#                 "Username": "N/A"
+#             },
+#             {
+#                 "GroupId": "ca1f84b8-38f0-40d5-84a3-9bad0457622e",
+#                 "Id": "b88d8d55-51b1-40d6-828e-91a3b48be27d",
+#                 "Name": "test2",
+#                 "Notes": "crypto",
+#                 ...
+#             }
+#             ...
+#             {
+#                 "GroupId": "9e1a4be5-2d57-4dee-a907-bb12d0a4efaf",
+#                 "Id": "f832abb3-a447-42c9-b64b-2f7733f68b47",
+#                 "Name": "test",
+#                 "Notes": "",
+#                 "Path": "Root/Path/To/Folder/",
+#                 "Tags": "PassMan.Business.Data.Tag",
+#                 "Url": "",
+#                 "Username": ""
+#             }
+#         ],
+#         "Groups": []
+#     },
+#     ...
+# }
+
+- set_fact:
+    pps_search_results: "{{ uri_result.json }}"

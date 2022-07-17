@@ -1,0 +1,6 @@
+---
+# vars file for pleasant-password-server-api
+
+match_pps_credential_id: '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{11}' # GUID
+match_pps_credentialgroup_id: "{{ match_pps_credential_id }}"
+match_pps_query:  '.*' # Insufficient REST API docs! TODO: exclude special and non-printable characters...

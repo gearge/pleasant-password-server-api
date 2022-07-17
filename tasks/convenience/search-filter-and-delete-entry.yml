@@ -1,0 +1,64 @@
+---
+# Copyright 2019, Giorgi Tavkelishvili
+#
+# License as per [repo](master/LICENSE)
+#
+# This play will conveniently search for, filter, and delete a matching entry on Pleasant Password Server.
+
+- name: List parameters to search-filter-and-delete-entry.yml
+  debug:
+    msg:
+       - "pps_credential: {{ pps_credential }}"
+  no_log: false
+
+- assert:
+    that:
+      - "['Name', 'FullPath'] is subset(pps_credential.keys())"
+    msg: "'Name', and/or 'FullPath' key(s) NOT in pps_credential: {{ pps_credential }}"
+  when: "'Id' not in pps_credential"
+  no_log: false
+
+- set_fact:
+    pps_search_filter_and_delete_entry_result: "" # RETVAL
+
+# --- Get Id -------------------------------------------------------------------
+
+- block:
+  - set_fact:
+      pps_search:
+        query: "{{ pps_credential.Name }}"
+        filters: "{{ pps_credential }}"
+  
+  # Sets: pps_search_and_filter_entries_results
+  - name: Include tasks from convenience/search-and-filter-entries.yml
+    include_tasks: convenience/search-and-filter-entries.yml
+  
+  - assert:
+      that:
+        - "pps_search_and_filter_entries_results | length <= 1"
+      msg:
+        - "Path='{{ pps_credential.FullPath }}' contains multiple items matching:"
+        - "Name='{{ pps_credential.Name }}'"
+    no_log: false
+  
+  - set_fact:
+      pps_credential: "{{ pps_credential | combine({'Id': item.Id}) }}"
+    when: "'Id' in item"
+    with_items: '{{ pps_search_and_filter_entries_results }}'
+  
+  when: "'Id' not in pps_credential"
+
+# --- Delete credential --------------------------------------------------------
+
+- block:
+  # Sets: pps_delete_credential_result
+  - name: Include tasks from ../{{ pps_api_version }}/delete-credential.yml
+    include_tasks: "../{{ pps_api_version }}/delete-credential.yml"
+  
+  - set_fact:
+      pps_search_filter_and_delete_entry_result: "{{ pps_delete_credential_result }}"
+  
+  when: "'Id' in pps_credential and pps_credential.Id != ''"
+
+- debug: var=pps_search_filter_and_delete_entry_result
+  no_log: false

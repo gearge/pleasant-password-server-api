@@ -1,0 +1,55 @@
+---
+# Copyright 2019, Giorgi Tavkelishvili
+#
+# License as per [repo](master/LICENSE)
+#
+# This play will conveniently search for and (optionally) filter Pleasant Password Server entries. 
+
+- name: List parameters to search-and-filter-entries.yml
+  debug:
+    msg:
+       - "pps_search: {{ pps_search }}"
+  no_log: false
+
+- assert:
+    that:
+      - "'query' in pps_search"
+    msg: "'query' key NOT in pps_search: {{ pps_search }}"
+  no_log: false
+
+- set_fact:
+    pps_search_and_filter_entries_results: [] # RETVAL
+
+# --- Search -------------------------------------------------------------------
+
+# Sets: pps_search_results
+- name: Include tasks from ../{{ pps_api_version }}/search.yml
+  include_tasks: "../{{ pps_api_version }}/search.yml"
+  vars:
+    pps_query: "{{ pps_search.query }}"
+
+- set_fact:
+    pps_read_credential_results: []
+
+# Sets: pps_read_credential_result
+# Updates: pps_read_credential_results
+- name: Include tasks from ../{{ pps_api_version }}/read-credential.yml
+  include_tasks: "../{{ pps_api_version }}/read-credential.yml"
+  with_items: '{{ pps_search_results.Credentials }}'
+  loop_control:
+    loop_var: pps_credential
+    label: "{{ pps_credential.Id }}"
+    pause: 1 # second(s)
+
+# --- Filter (if applicable) ---------------------------------------------------
+
+- set_fact:
+    pps_search_and_filter_entries_results: "{{ lookup('template', 'pps_filter_credentials.j2') | list }}"
+  when: "'filters' in pps_search"
+
+- set_fact:
+    pps_search_and_filter_entries_results: "{{ pps_read_credential_results }}"
+  when: "'filters' not in pps_search"
+
+- debug: var=pps_search_and_filter_entries_results
+  no_log: false

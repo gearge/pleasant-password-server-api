@@ -1,0 +1,9 @@
+---
+# defaults file for pleasant-password-server-api
+
+pps_operation: ""
+pps_authority: "localhost:10001"
+pps_api_version: "v4"
+pps_oauth2_username: "admin"
+pps_oauth2_password: "admin"
+pps_oauth2_token: {}
