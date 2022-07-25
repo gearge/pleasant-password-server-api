@@ -11,6 +11,8 @@ Requires a running instance of Pleasant Password Server 7.0 or higher. See https
 Role Variables
 --------------
 
+Reads
+
 | Variable name         | Default value (if any) | Description |
 | :-------------------- | :--------------------- | :---------- |
 | `pps_oauth2_username` | `admin`                | User username to acquire an authorization token. See https://pleasantpasswords.com/info/pleasant-password-server/m-programmatic-access/restful-api#v4 |
@@ -23,6 +25,25 @@ Role Variables
 | `pps_credentialgroup` |                        | Required when `pps_operation` is `create-or-update-folder`, `create-credentialgroup`, `delete-credentialgroup`, `read-credentialgroup`, `update-credentialgroup`. See [tasks/convenience/create-or-update-folder.yml](tasks/convenience/create-or-update-folder.yml), [tasks/v4/create-credentialgroup.yml](tasks/v4/create-credentialgroup.yml), [tasks/v4/delete-credentialgroup.yml](tasks/v4/delete-credentialgroup.yml), [tasks/v4/read-credentialgroup.yml](tasks/v4/read-credentialgroup.yml), [tasks/v4/update-credentialgroup.yml](tasks/v4/update-credentialgroup.yml) |
 | `pps_search`          |                        | Required when `pps_operation` is `search-and-filter-entries`. See [tasks/convenience/search-and-filter-entries.yml](tasks/convenience/search-and-filter-entries.yml) |
 | `pps_query`           |                        | Required when `pps_operation` is `search`. See [tasks/v4/search.yml](tasks/v4/search.yml) |
+
+Sets
+
+| For `pps_operation`              | Result variable |
+| :------------------------------- | :-------------- |
+| `create-credentialgroup`         | `pps_create_credentialgroup_result` |
+| `create-credential`              | `pps_create_credential_result` |
+| `delete-credentialgroup`         | `pps_delete_credentialgroup_result` |
+| `delete-credential`              | `pps_delete_credential_result` |
+| `read-credentialgroup-root`      | `pps_read_credentialgroup_root_result` |
+| `read-credentialgroup`           | `pps_read_credentialgroup_results` |
+| `read-credential`                | `pps_read_credential_results` |
+| `search`                         | `pps_search_results` |
+| `update-credentialgroup`         | `pps_update_credentialgroup_result` |
+| `update-credential`              | `pps_update_credential_result` |
+| `create-or-update-entry`         | `pps_create_or_update_entry_result` |
+| `search-and-filter-entries`      | `pps_search_and_filter_entries_results` |
+| `search-filter-and-delete-entry` | `pps_search_filter_and_delete_entry_result` |
+| `create-or-update-folder`        | `pps_create_or_update_folder_result` |
 
 Dependencies
 ------------
