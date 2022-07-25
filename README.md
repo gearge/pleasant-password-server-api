@@ -55,6 +55,8 @@ Example Playbooks
 
 Note: Here Ansible Vault file (`vault.yml`) is used to provide values for secrets, with `vault_pps_oauth2_username` defined within the vault mapped to `pps_oauth2_username`, `vault_pps_oauth2_password` mapped to `pps_oauth2_password`, etc. Read [man page for `ansible-vault`](https://docs.ansible.com/ansible/2.9/cli/ansible-vault.html) for how to create this file.
 
+`git clone https://github.com/gearge/pleasant-password-server-api.git pps-api`
+
 Search for entries containing string "FOO", next select only those with Name == "FOO" under path "Root/PATH/TO/" on PPS:
 
     ---
@@ -77,6 +79,8 @@ Search for entries containing string "FOO", next select only those with Name == 
         - vault.yml
       roles:
         - pps-api
+      post_tasks:
+        - debug: var=pps_search_and_filter_entries_results
 
 Create a new or update an existing entry with Name == "FOO" under path "Root/PATH/TO/" on PPS:
 
@@ -103,6 +107,8 @@ Create a new or update an existing entry with Name == "FOO" under path "Root/PAT
         - vault.yml
       roles:
         - pps-api
+      post_tasks:
+        - debug: var=pps_create_or_update_entry_result
 
 License
 -------
